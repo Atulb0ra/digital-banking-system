@@ -1,0 +1,124 @@
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway-service
+
+  data:
+    redis:
+      host: localhost
+      port: 7000
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+
+            # Account Service Route
+            - id: account-service
+              uri: http://localhost:8081
+              predicates:
+                - Path=/api/v1/accounts/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@keyResolver}"
+
+            # Transaction Service Route
+            - id: transaction-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/v1/transactions/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@keyResolver}"
+
+            # Payment Service Route
+            - id: payment-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/v1/payments/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 5
+                    redis-rate-limiter.burstCapacity: 10
+                    key-resolver: "#{@keyResolver}"
+
+            # Account Swagger Route
+            - id: account-swagger
+              uri: http://localhost:8081
+              predicates:
+                - Path=/v3/api-docs/account
+              filters:
+                - RewritePath=/v3/api-docs/account$, /v3/api-docs
+
+            # Transaction Swagger Route
+            - id: transaction-swagger
+              uri: http://localhost:8082
+              predicates:
+                - Path=/v3/api-docs/transaction
+              filters:
+                - RewritePath=/v3/api-docs/transaction$, /v3/api-docs
+
+            # Payment Swagger Route
+            - id: payment-swagger
+              uri: http://localhost:8083
+              predicates:
+                - Path=/v3/api-docs/payment
+              filters:
+                - RewritePath=/v3/api-docs/payment$, /v3/api-docs
+
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - "http://127.0.0.1:5500"
+                  - "http://localhost:5500"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders: "*"
+                maxAge: 3600
+
+          default-filters:
+            - name: DedupeResponseHeader
+              args:
+                name: Access-Control-Allow-Origin
+                strategy: RETAIN_FIRST
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: Account Service
+        url: /v3/api-docs/account
+
+      - name: Transaction Service
+        url: /v3/api-docs/transaction
+
+      - name: Payment Service
+        url: /v3/api-docs/payment
+
+    urls-primary-name: Account Service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      access: unrestricted
