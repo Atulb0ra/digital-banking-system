@@ -574,8 +574,6 @@ Configure the following environment variables according to your local setup:
 | `RAZORPAY_KEY_SECRET` | Razorpay test API secret |
 | `RAZORPAY_WEBHOOK_SECRET` | Razorpay webhook secret |
 | `SPRING_KAFKA_BOOTSTRAP_SERVERS` | Kafka bootstrap address |
-| `SPRING_REDIS_HOST` | Redis host |
-| `SPRING_REDIS_PORT` | Redis port |
 
 Do not commit real credentials or secrets to the repository.
 
